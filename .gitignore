@@ -11,3 +11,7 @@ assets/MixxxDownloader.iconset/
 assets/MixxxDownloader.icns
 assets/MixxxDownloader-1024.png
 outputs/*.app/
+outputs/*.dmg
+outputs/*.zip
+outputs/*.sha256
+work/release-staging/

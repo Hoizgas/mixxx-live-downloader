@@ -32,6 +32,16 @@ zsh ./build_app.sh
 
 Das Ergebnis wird unter `outputs/Mixxx Live Downloader.app` abgelegt. Beim ersten Start das Admin-Konto erstellen. macOS kann beim Öffnen einer lokal gebauten, nicht signierten App eine Sicherheitsbestätigung verlangen.
 
+## GitHub-Release-Installer
+
+```bash
+zsh ./build_release.sh
+```
+
+Das erzeugt ein Intel-macOS-DMG mit `Install.command`. Der Installer prüft macOS-Version, Architektur, Homebrew und die Audio-Tools. Wenn Homebrew oder `yt-dlp`/`ffmpeg`/`ffprobe` fehlen, fragt er vor der Installation. Homebrew kann zusätzliche notwendige Formel-Abhängigkeiten einrichten. Danach kopiert er die App nach `/Applications` oder `~/Applications` und öffnet sie.
+
+Das Release ist für Intel-Macs (x86_64) und macOS 15 oder neuer. Es ist nicht mit Developer-ID signiert oder notarisiert; macOS kann beim ersten Öffnen eine Bestätigung verlangen. Der Installer umgeht diese macOS-Sicherheitsprüfung nicht.
+
 ## LAN-Freigabe
 
 Aktiviere im Kontrollpanel **Im lokalen Netzwerk erreichbar (HTTPS)** und starte den Server. Die angezeigte Adresse enthält die LAN-IP und den Port. Ohne Häkchen wird der Server an `127.0.0.1` gebunden. macOS kann beim ersten eingehenden Zugriff eine Firewall-Abfrage anzeigen; erteile Zugriff nur, wenn du den Dienst im lokalen Netz nutzen willst.
