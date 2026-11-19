@@ -38,7 +38,7 @@ Das Ergebnis wird unter `outputs/Mixxx Live Downloader.app` abgelegt. Beim erste
 zsh ./build_release.sh
 ```
 
-Das erzeugt ein Intel-macOS-DMG mit `Install.command`. Der Installer prüft macOS-Version, Architektur, Homebrew und die Audio-Tools. Wenn Homebrew oder `yt-dlp`/`ffmpeg`/`ffprobe` fehlen, fragt er vor der Installation. Homebrew kann zusätzliche notwendige Formel-Abhängigkeiten einrichten. Danach kopiert er die App nach `/Applications` oder `~/Applications` und öffnet sie.
+Das erzeugt ein Intel-macOS-ZIP mit der App, `Install.command` und README. Der Installer prüft macOS-Version, Architektur, Homebrew und die Audio-Tools. Wenn Homebrew oder `yt-dlp`/`ffmpeg`/`ffprobe` fehlen, fragt er vor der Installation. Homebrew kann zusätzliche notwendige Formel-Abhängigkeiten einrichten. Danach kopiert er die App nach `/Applications` oder `~/Applications` und öffnet sie.
 
 Das Release ist für Intel-Macs (x86_64) und macOS 15 oder neuer. Es ist nicht mit Developer-ID signiert oder notarisiert; macOS kann beim ersten Öffnen eine Bestätigung verlangen. Der Installer umgeht diese macOS-Sicherheitsprüfung nicht.
 
