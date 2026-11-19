@@ -595,7 +595,8 @@ class ControlPanel:
                 "Fehlende Audio-Tools",
                 "Nicht gefunden: " + ", ".join(missing) + ".\n\n"
                 "Soll Homebrew jetzt " + ", ".join(formulas) + " installieren? "
-                "Homebrew installiert bei Bedarf auch notwendige Abhängigkeiten.",
+                "Homebrew installiert bei Bedarf auch notwendige Abhängigkeiten. "
+                "Auf Intel-Macs kann Homebrew die Pakete aus dem Quellcode bauen müssen; das kann deutlich länger dauern.",
                 parent=self.root,
             ):
                 self.status_var.set("Server gestoppt · benötigte Audio-Tools fehlen.")
@@ -628,14 +629,28 @@ class ControlPanel:
                 [brew, "install", *formulas],
                 capture_output=True,
                 text=True,
-                timeout=1800,
+                timeout=10800,
                 check=False,
                 env=env,
             )
+            install_log = result.stderr or result.stdout or ""
+            if result.returncode:
+                source_result = subprocess.run(
+                    [brew, "install", "--build-from-source", *formulas],
+                    capture_output=True,
+                    text=True,
+                    timeout=10800,
+                    check=False,
+                    env=env,
+                )
+                install_log += "\n\nHomebrew-Quellcode-Build:\n" + (source_result.stderr or source_result.stdout or "")
+                result = source_result
             still_missing = missing_audio_tools()
             if result.returncode or still_missing:
-                detail = (result.stderr or result.stdout or "").strip()
+                detail = install_log.strip()
                 error = "Homebrew konnte die Audio-Tools nicht vollständig installieren."
+                if "no bottle available" in detail.lower() or "tier 3" in detail.lower():
+                    error += "\n\nHomebrew hat für diese Intel-Konfiguration kein fertiges Paket gefunden und auch den Quellcode-Build nicht abgeschlossen."
                 if still_missing:
                     error += " Noch nicht verfügbar: " + ", ".join(still_missing) + "."
                 if detail:

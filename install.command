@@ -62,7 +62,13 @@ if (( ${#missing[@]} > 0 )); then
   if ! confirm "Soll Homebrew diese Pakete samt erforderlichen Abhängigkeiten installieren?"; then
     fail "Die erforderlichen Audio-Tools fehlen."
   fi
-  "$BREW" install "${missing[@]}"
+  if ! "$BREW" install "${missing[@]}"; then
+    say "Homebrew konnte keine passenden fertigen Pakete installieren. Auf Intel-Macs fehlen diese Pakete derzeit häufig (Tier 3)."
+    if ! confirm "Soll Homebrew es erneut versuchen und die Pakete aus dem Quellcode bauen? Das kann lange dauern und zusätzliche Entwicklungswerkzeuge benötigen."; then
+      fail "Quellcode-Build abgelehnt. Die Audio-Tools sind noch nicht installiert."
+    fi
+    "$BREW" install --build-from-source "${missing[@]}" || fail "Auch der Homebrew-Quellcode-Build ist fehlgeschlagen. Prüfe die Terminal-Ausgabe und die installierten Xcode Command Line Tools."
+  fi
 fi
 
 for tool in yt-dlp ffmpeg ffprobe; do
