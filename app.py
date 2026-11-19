@@ -30,7 +30,7 @@ DEFAULT_FOLDER = Path.home() / "Music" / "Mixxx_Downloads"
 CERT_FILE = CONFIG_DIR / "server.crt"
 KEY_FILE = CONFIG_DIR / "server.key"
 os.environ["PATH"] = os.pathsep.join(
-    ["/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", os.environ.get("PATH", "")]
+    ["/opt/local/bin", "/opt/homebrew/bin", "/usr/local/bin", "/usr/bin", "/bin", os.environ.get("PATH", "")]
 )
 
 
@@ -651,6 +651,7 @@ class ControlPanel:
                 error = "Homebrew konnte die Audio-Tools nicht vollständig installieren."
                 if "no bottle available" in detail.lower() or "tier 3" in detail.lower():
                     error += "\n\nHomebrew hat für diese Intel-Konfiguration kein fertiges Paket gefunden und auch den Quellcode-Build nicht abgeschlossen."
+                    error += "\n\nEmpfohlener Weg für Intel: MacPorts für macOS Sequoia installieren (https://www.macports.org/install.php), danach im Terminal `sudo port selfupdate && sudo port install yt-dlp ffmpeg` ausführen und die App neu starten."
                 if still_missing:
                     error += " Noch nicht verfügbar: " + ", ".join(still_missing) + "."
                 if detail:

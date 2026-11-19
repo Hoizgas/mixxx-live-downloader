@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-VERSION="1.0.1"
+VERSION="1.0.2"
 APP="$ROOT/outputs/Mixxx Live Downloader.app"
 STAGING="$ROOT/work/release-staging"
 ZIP="$ROOT/outputs/mixxx-live-downloader-v${VERSION}-macos-x86_64.zip"

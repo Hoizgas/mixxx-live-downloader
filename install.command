@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+export PATH="/opt/local/bin:/opt/local/sbin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 APP_NAME="Mixxx Live Downloader.app"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
@@ -67,7 +68,12 @@ if (( ${#missing[@]} > 0 )); then
     if ! confirm "Soll Homebrew es erneut versuchen und die Pakete aus dem Quellcode bauen? Das kann lange dauern und zusätzliche Entwicklungswerkzeuge benötigen."; then
       fail "Quellcode-Build abgelehnt. Die Audio-Tools sind noch nicht installiert."
     fi
-    "$BREW" install --build-from-source "${missing[@]}" || fail "Auch der Homebrew-Quellcode-Build ist fehlgeschlagen. Prüfe die Terminal-Ausgabe und die installierten Xcode Command Line Tools."
+    if ! "$BREW" install --build-from-source "${missing[@]}"; then
+      say "Homebrew kann die Intel-Abhängigkeiten nicht bereitstellen. MacPorts bietet passende Ports für macOS Sequoia."
+      say "Installiere MacPorts über https://www.macports.org/install.php, öffne danach ein neues Terminal und führe aus:"
+      say "sudo port selfupdate && sudo port install yt-dlp ffmpeg"
+      fail "Installiere anschließend dieses Paket erneut, damit der Installer die Tools prüft und die App einrichtet."
+    fi
   fi
 fi
 
