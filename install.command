@@ -31,6 +31,15 @@ if [[ ! -d "$SOURCE_APP" ]]; then
   fail "Die App liegt nicht neben diesem Installer. Öffne Install.command direkt aus dem bereitgestellten DMG."
 fi
 
+if [[ -x /opt/local/bin/port ]] && { ! command -v yt-dlp >/dev/null 2>&1 || ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; }; then
+  say "MacPorts ist installiert. Es kann die fehlenden Audio-Tools einrichten."
+  if confirm "Soll MacPorts jetzt aktualisiert werden und yt-dlp sowie ffmpeg installieren? macOS fragt nach deinem Admin-Passwort."; then
+    if ! sudo /opt/local/bin/port selfupdate || ! sudo /opt/local/bin/port install yt-dlp ffmpeg; then
+      fail "MacPorts konnte die Audio-Tools nicht vollständig installieren. Prüfe die Ausgabe im Terminal."
+    fi
+  fi
+fi
+
 BREW="$(command -v brew || true)"
 if [[ -z "$BREW" ]]; then
   for candidate in /usr/local/bin/brew /opt/homebrew/bin/brew; do

@@ -1,4 +1,4 @@
-Mixxx Live Downloader v1.0.2 — Intel Mac
+Mixxx Live Downloader v1.0.3 — Intel Mac
 
 Installation:
 1. Öffne Install.command mit Doppelklick.
@@ -7,7 +7,7 @@ Installation:
 4. Der Installer kopiert die App nach /Applications oder ~/Applications und öffnet sie.
 5. Beim ersten Start Admin-Nutzer und Passwort einrichten.
 
-Der Installer benötigt macOS 15 oder neuer und Intel (x86_64). Homebrew kann nötige Formel-Abhängigkeiten mitinstallieren. Intel-macOS ist bei Homebrew Tier 3; daher können auch Abhängigkeiten ohne fertige Pakete vorliegen. Wenn Homebrew fehlschlägt, installiere MacPorts für macOS Sequoia und führe `sudo port selfupdate && sudo port install yt-dlp ffmpeg` aus. Die App findet MacPorts-Tools automatisch unter `/opt/local/bin`.
+Der Installer benötigt macOS 15 oder neuer und Intel (x86_64). Homebrew kann nötige Formel-Abhängigkeiten mitinstallieren. Intel-macOS ist bei Homebrew Tier 3; daher können auch Abhängigkeiten ohne fertige Pakete vorliegen. Wenn MacPorts installiert ist, kann die App nach deiner Bestätigung die Tools mit macOS-Adminabfrage einrichten. Die App findet MacPorts-Tools automatisch unter `/opt/local/bin`.
 
 Die App ist in diesem Release nicht mit einer Developer-ID signiert oder notarisiert. Wenn Gatekeeper sie blockiert, öffne sie im Finder per Rechtsklick > Öffnen und bestätige macOS' Dialog. Der Installer umgeht Gatekeeper nicht.
 

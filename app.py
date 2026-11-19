@@ -15,7 +15,7 @@ import time
 import uuid
 import webbrowser
 from pathlib import Path
-from tkinter import BooleanVar, StringVar, Tk, filedialog, messagebox, ttk
+from tkinter import BooleanVar, StringVar, Text, Tk, Toplevel, filedialog, messagebox, ttk
 from urllib.parse import urlparse
 
 from flask import Flask, jsonify, redirect, render_template_string, request, session, url_for
@@ -36,6 +36,13 @@ os.environ["PATH"] = os.pathsep.join(
 
 def find_brew() -> str | None:
     for candidate in ("/opt/homebrew/bin/brew", "/usr/local/bin/brew", shutil.which("brew")):
+        if candidate and os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
+def find_macports() -> str | None:
+    for candidate in ("/opt/local/bin/port", shutil.which("port")):
         if candidate and os.path.isfile(candidate) and os.access(candidate, os.X_OK):
             return candidate
     return None
@@ -581,6 +588,25 @@ class ControlPanel:
         lan_enabled = bool(self.lan_var.get())
         missing = missing_audio_tools()
         if missing:
+            macports = find_macports()
+            if macports:
+                if not messagebox.askyesno(
+                    "Fehlende Audio-Tools",
+                    "Nicht gefunden: " + ", ".join(missing) + ".\n\n"
+                    "MacPorts ist installiert. Soll macOS jetzt nach deiner Admin-Bestätigung `yt-dlp` und `ffmpeg` über MacPorts einrichten?\n\n"
+                    "Das kann einige Zeit dauern.",
+                    parent=self.root,
+                ):
+                    self.status_var.set("Server gestoppt · benötigte Audio-Tools fehlen.")
+                    return
+                self.begin_dependency_install("MacPorts richtet yt-dlp und ffmpeg ein …")
+                threading.Thread(
+                    target=self.install_with_macports,
+                    args=(macports, port, lan_enabled),
+                    daemon=True,
+                    name="mixxx-macports-installer",
+                ).start()
+                return
             brew = find_brew()
             if not brew:
                 messagebox.showerror(
@@ -601,16 +627,7 @@ class ControlPanel:
             ):
                 self.status_var.set("Server gestoppt · benötigte Audio-Tools fehlen.")
                 return
-            self.installing_dependencies = True
-            self.status_var.set("Homebrew installiert die fehlenden Audio-Tools und Abhängigkeiten …")
-            self.dependencies_var.set("Installation läuft · dieses Fenster bleibt bedienbar")
-            self.start_button.configure(state="disabled")
-            self.stop_button.configure(state="disabled")
-            self.port_entry.configure(state="disabled")
-            self.lan_check.configure(state="disabled")
-            self.logout_button.configure(state="disabled")
-            self.install_progress.pack(fill="x", pady=(0, 12))
-            self.install_progress.start(12)
+            self.begin_dependency_install("Homebrew installiert Audio-Tools und Abhängigkeiten …")
             threading.Thread(
                 target=self.install_dependencies,
                 args=(brew, formulas, port, lan_enabled),
@@ -619,6 +636,45 @@ class ControlPanel:
             ).start()
             return
         self.launch_server(port, lan_enabled)
+
+    def begin_dependency_install(self, status: str) -> None:
+        self.installing_dependencies = True
+        self.status_var.set(status)
+        self.dependencies_var.set("Installation läuft · dieses Fenster bleibt bedienbar")
+        self.start_button.configure(state="disabled")
+        self.stop_button.configure(state="disabled")
+        self.port_entry.configure(state="disabled")
+        self.lan_check.configure(state="disabled")
+        self.logout_button.configure(state="disabled")
+        self.install_progress.pack(fill="x", pady=(0, 12))
+        self.install_progress.start(12)
+
+    def install_with_macports(self, macports: str, port: int, lan_enabled: bool) -> None:
+        error = ""
+        try:
+            command = f"{macports} selfupdate && {macports} install yt-dlp ffmpeg"
+            applescript_command = command.replace("\\", "\\\\").replace('"', '\\"')
+            script = f'do shell script "{applescript_command}" with administrator privileges'
+            result = subprocess.run(
+                ["/usr/bin/osascript", "-e", script],
+                capture_output=True,
+                text=True,
+                timeout=10800,
+                check=False,
+            )
+            still_missing = missing_audio_tools()
+            if result.returncode or still_missing:
+                detail = (result.stderr or result.stdout or "").strip()
+                error = "MacPorts konnte die Audio-Tools nicht vollständig installieren."
+                if still_missing:
+                    error += " Noch nicht verfügbar: " + ", ".join(still_missing) + "."
+                if detail:
+                    error += "\n\n" + detail[-1000:]
+        except subprocess.TimeoutExpired:
+            error = "Die MacPorts-Installation dauerte länger als drei Stunden und wurde abgebrochen."
+        except OSError as exc:
+            error = f"MacPorts konnte nicht gestartet werden: {exc}"
+        self.ui_events.put(("dependencies_done", error, port, lan_enabled))
 
     def install_dependencies(self, brew: str, formulas: list[str], port: int, lan_enabled: bool) -> None:
         error = ""
@@ -655,7 +711,7 @@ class ControlPanel:
                 if still_missing:
                     error += " Noch nicht verfügbar: " + ", ".join(still_missing) + "."
                 if detail:
-                    error += "\n\n" + detail[-1800:]
+                    error += "\n\nInstallationsdetails:\n" + detail[-1000:]
         except subprocess.TimeoutExpired:
             error = "Die Homebrew-Installation hat das Zeitlimit von 30 Minuten überschritten."
         except OSError as exc:
@@ -686,10 +742,32 @@ class ControlPanel:
             missing = missing_audio_tools()
             self.dependencies_var.set("Fehlen weiterhin: " + ", ".join(missing) if missing else "Audio-Tools bereit")
             self.status_var.set("Server gestoppt · Installation fehlgeschlagen.")
-            messagebox.showerror("Installation fehlgeschlagen", error, parent=self.root)
+            self.show_error_dialog("Installation fehlgeschlagen", error)
             return
         self.dependencies_var.set("Audio-Tools bereit: yt-dlp, ffmpeg und ffprobe")
         self.launch_server(port, lan_enabled)
+
+    def show_error_dialog(self, title: str, message: str) -> None:
+        window = Toplevel(self.root)
+        window.title(title)
+        window.geometry("720x500")
+        window.minsize(520, 360)
+        window.transient(self.root)
+        window.grab_set()
+        container = ttk.Frame(window, padding=16)
+        container.pack(fill="both", expand=True)
+        ttk.Label(container, text=title, font=("Helvetica Neue", 14, "bold")).pack(anchor="w", pady=(0, 10))
+        text_frame = ttk.Frame(container)
+        text_frame.pack(fill="both", expand=True)
+        details = Text(text_frame, wrap="word", height=18, width=80, padx=10, pady=10)
+        scrollbar = ttk.Scrollbar(text_frame, orient="vertical", command=details.yview)
+        details.configure(yscrollcommand=scrollbar.set)
+        details.insert("1.0", message)
+        details.configure(state="disabled")
+        details.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        ttk.Button(container, text="Schließen", command=window.destroy).pack(anchor="e", pady=(12, 0))
+        window.protocol("WM_DELETE_WINDOW", window.destroy)
 
     def launch_server(self, port: int, lan_enabled: bool):
         try:
